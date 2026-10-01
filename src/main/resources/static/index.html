@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Document to PDF</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<main class="page">
+    <header class="intro">
+        <h1>Document to PDF</h1>
+        <p>Upload a document and get it back as a PDF generated with iText.</p>
+    </header>
+
+    <section class="card" id="upload-card">
+        <form id="upload-form" novalidate>
+            <label class="dropzone" id="dropzone" for="file-input">
+                <input type="file" id="file-input" name="file" class="visually-hidden">
+                <svg class="dropzone-icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 16V4m0 0-4 4m4-4 4 4M5 15v3a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3"
+                          fill="none" stroke="currentColor" stroke-width="1.8"
+                          stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="dropzone-title">Drop a file here or <u>browse</u></span>
+                <span class="dropzone-hint" id="formats-hint">Word, HTML, text, CSV and images · up to 20 MB</span>
+            </label>
+
+            <div class="selected" id="selected" hidden>
+                <div class="selected-info">
+                    <span class="selected-name" id="selected-name"></span>
+                    <span class="selected-size" id="selected-size"></span>
+                </div>
+                <button type="button" class="link-button" id="clear-button">Remove</button>
+            </div>
+
+            <p class="message error" id="error" role="alert" hidden></p>
+
+            <button type="submit" class="primary" id="convert-button" disabled>
+                <span class="spinner" aria-hidden="true"></span>
+                <span class="button-label">Convert to PDF</span>
+            </button>
+        </form>
+    </section>
+
+    <section class="card result" id="result" hidden aria-live="polite">
+        <div class="result-header">
+            <div>
+                <h2 id="result-name"></h2>
+                <p class="result-meta">
+                    <span id="result-size"></span>
+                    <span class="badge" id="result-producer" title="PDF Producer metadata"></span>
+                </p>
+            </div>
+            <div class="result-actions">
+                <a class="primary" id="download-link" download>Download PDF</a>
+                <a class="secondary" id="open-link" target="_blank" rel="noopener">Open</a>
+                <button type="button" class="secondary" id="again-button">Convert another</button>
+            </div>
+        </div>
+        <iframe class="preview" id="preview" title="PDF preview"></iframe>
+    </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>

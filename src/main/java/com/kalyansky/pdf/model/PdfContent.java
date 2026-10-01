@@ -13,6 +13,7 @@ public record PdfContent(
         String subject,
         String keywords,
         boolean pageNumbers,
+        boolean titleOnPage,
         List<Block> blocks) {
 
     public PdfContent {
@@ -30,6 +31,7 @@ public record PdfContent(
         private String subject;
         private String keywords;
         private boolean pageNumbers = true;
+        private boolean titleOnPage = true;
         private final List<Block> blocks = new ArrayList<>();
 
         private Builder(String title) {
@@ -53,6 +55,12 @@ public record PdfContent(
 
         public Builder pageNumbers(boolean pageNumbers) {
             this.pageNumbers = pageNumbers;
+            return this;
+        }
+
+        /** Whether the title is printed at the top of the first page (it is always set as metadata). */
+        public Builder titleOnPage(boolean titleOnPage) {
+            this.titleOnPage = titleOnPage;
             return this;
         }
 
@@ -98,7 +106,7 @@ public record PdfContent(
         }
 
         public PdfContent build() {
-            return new PdfContent(title, author, subject, keywords, pageNumbers, blocks);
+            return new PdfContent(title, author, subject, keywords, pageNumbers, titleOnPage, blocks);
         }
     }
 }

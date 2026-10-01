@@ -79,10 +79,12 @@ public class PdfGenerator {
             // Fonts belong to one PdfDocument, so a fresh one is created per PDF
             PdfFont bold = createBoldFont();
             document.setMargins(MARGIN, MARGIN, MARGIN + 12, MARGIN);
-            document.add(new Paragraph(content.title())
-                    .setFont(bold)
-                    .setFontSize(24)
-                    .setMarginBottom(12));
+            if (content.titleOnPage()) {
+                document.add(new Paragraph(content.title())
+                        .setFont(bold)
+                        .setFontSize(24)
+                        .setMarginBottom(12));
+            }
             for (Block block : content.blocks()) {
                 render(document, block, bold);
             }

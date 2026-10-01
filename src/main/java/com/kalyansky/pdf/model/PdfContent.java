@@ -76,6 +76,10 @@ public record PdfContent(
             return add(new Block.Paragraph(text));
         }
 
+        public Builder preformatted(String text) {
+            return add(new Block.Preformatted(text));
+        }
+
         public Builder bulletList(List<String> items) {
             return add(new Block.BulletList(items));
         }

@@ -6,7 +6,8 @@ import com.kalyansky.pdf.model.PdfContent;
 import java.util.Set;
 
 /**
- * Plain text: blank lines separate paragraphs, single line breaks are kept.
+ * Plain text, laid out exactly as in the file: same lines, spaces, indentation and blank
+ * lines, in a monospace font.
  */
 public class TextConverter implements DocumentConverter {
 
@@ -24,12 +25,11 @@ public class TextConverter implements DocumentConverter {
     @Override
     public byte[] convert(SourceDocument source) {
         String text = TextDecoding.decode(source.data()).replace("\r\n", "\n").replace('\r', '\n');
-        PdfContent.Builder builder = PdfContent.builder(source.baseName()).titleOnPage(false);
-        for (String paragraph : text.split("\n\\s*\n")) {
-            if (!paragraph.isBlank()) {
-                builder.paragraph(paragraph.stripTrailing());
-            }
-        }
-        return generator.generate(builder.build());
+        PdfContent content = PdfContent.builder(source.baseName())
+                .titleOnPage(false)
+                .pageNumbers(false)
+                .preformatted(text)
+                .build();
+        return generator.generate(content);
     }
 }

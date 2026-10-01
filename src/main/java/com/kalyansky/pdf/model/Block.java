@@ -7,7 +7,7 @@ import java.util.Objects;
  * A piece of content placed in the document body, rendered top to bottom.
  */
 public sealed interface Block
-        permits Block.Heading, Block.Paragraph, Block.BulletList, Block.Table,
+        permits Block.Heading, Block.Paragraph, Block.Preformatted, Block.BulletList, Block.Table,
                 Block.Image, Block.PageBreak {
 
     /** Section heading; level 1 is the largest, level 3 the smallest. */
@@ -22,6 +22,13 @@ public sealed interface Block
 
     record Paragraph(String text) implements Block {
         public Paragraph {
+            Objects.requireNonNull(text, "text");
+        }
+    }
+
+    /** Text shown exactly as given in a monospace font: every space, tab and line break is kept. */
+    record Preformatted(String text) implements Block {
+        public Preformatted {
             Objects.requireNonNull(text, "text");
         }
     }

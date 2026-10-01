@@ -34,6 +34,8 @@ public class CsvConverter implements DocumentConverter {
         List<List<String>> padded = rows.stream().map(row -> pad(row, columns)).toList();
 
         PdfContent content = PdfContent.builder(source.baseName())
+                .titleOnPage(false)
+                .pageNumbers(false)
                 .table(padded.get(0), padded.subList(1, padded.size()))
                 .build();
         return generator.generate(content);

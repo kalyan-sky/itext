@@ -27,9 +27,11 @@ public class ApiErrorHandler {
         if (!e.isUnsupportedFormat()) {
             log.warn("Conversion failed: {}", e.getMessage(), e.getCause());
         }
-        HttpStatus status = e.isUnsupportedFormat()
-                ? HttpStatus.UNSUPPORTED_MEDIA_TYPE
-                : HttpStatus.UNPROCESSABLE_ENTITY;
+        HttpStatus status = switch (e.kind()) {
+            case UNSUPPORTED_FORMAT -> HttpStatus.UNSUPPORTED_MEDIA_TYPE;
+            case UNREADABLE -> HttpStatus.UNPROCESSABLE_ENTITY;
+            case UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
+        };
         return error(status, e.getMessage());
     }
 

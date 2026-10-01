@@ -48,6 +48,57 @@ Western European languages may not render.
 curl -F file=@report.docx http://localhost:8080/api/convert -o report.pdf
 ```
 
+## Deploy to Google Cloud Run
+
+The `Dockerfile` builds the app and runs it on a Java 21 JRE as a non-root user. Cloud Run
+passes the port in `PORT`, which the app reads.
+
+### From your machine
+
+Requires the [gcloud CLI](https://cloud.google.com/sdk/docs/install) and a project with
+billing enabled.
+
+```sh
+gcloud auth login
+gcloud config set project YOUR_PROJECT_ID
+gcloud services enable run.googleapis.com cloudbuild.googleapis.com artifactregistry.googleapis.com
+
+gcloud run deploy itext-pdf-converter \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --memory 1Gi --cpu 1 --concurrency 20 --timeout 120 --max-instances 3
+```
+
+`--source .` uploads the repo, builds the Dockerfile with Cloud Build, and deploys it. The
+command prints the service URL when it finishes. Drop `--allow-unauthenticated` to keep the
+service private (callers then need an identity token). `--max-instances` caps cost.
+
+### From GitHub Actions
+
+`.github/workflows/deploy-cloud-run.yml` runs the tests and deploys on every push to `main`
+(or manually from the Actions tab). One-time setup:
+
+1. Create a deployer service account and give it the roles `gcloud run deploy --source` needs:
+
+   ```sh
+   PROJECT=YOUR_PROJECT_ID
+   gcloud iam service-accounts create github-deployer --project $PROJECT
+   SA=github-deployer@$PROJECT.iam.gserviceaccount.com
+   for role in roles/run.admin roles/cloudbuild.builds.editor roles/artifactregistry.admin \
+               roles/storage.admin roles/iam.serviceAccountUser roles/serviceusage.serviceUsageConsumer; do
+     gcloud projects add-iam-policy-binding $PROJECT --member serviceAccount:$SA --role $role
+   done
+   gcloud iam service-accounts keys create key.json --iam-account $SA
+   ```
+
+2. In the GitHub repo, under **Settings → Secrets and variables → Actions**:
+   - secret `GCP_SA_KEY`: the contents of `key.json` (then delete the local file)
+   - variable `GCP_PROJECT_ID`: your project id
+   - variable `GCP_REGION` (optional): defaults to `us-central1`
+
+The deploy job is skipped until `GCP_PROJECT_ID` is set.
+
 ## Java API
 
 ```java

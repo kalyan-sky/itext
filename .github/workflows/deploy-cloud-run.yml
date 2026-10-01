@@ -1,0 +1,64 @@
+name: Deploy to Cloud Run
+
+# Builds the Dockerfile with Cloud Build and deploys it to Cloud Run.
+# Setup (see README "Deploy to Google Cloud Run"):
+#   repository variables: GCP_PROJECT_ID, GCP_REGION (optional, default us-central1)
+#   repository secret:    GCP_SA_KEY (JSON key of the deployer service account)
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-cloud-run
+  cancel-in-progress: false
+
+env:
+  SERVICE: itext-pdf-converter
+  REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - run: mvn -B test
+
+  deploy:
+    needs: test
+    # Skipped until the project is configured, so forks and fresh clones stay green
+    if: ${{ vars.GCP_PROJECT_ID != '' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Deploy
+        id: deploy
+        uses: google-github-actions/deploy-cloudrun@v2
+        with:
+          project_id: ${{ vars.GCP_PROJECT_ID }}
+          service: ${{ env.SERVICE }}
+          region: ${{ env.REGION }}
+          source: ./
+          flags: >-
+            --allow-unauthenticated
+            --memory=1Gi
+            --cpu=1
+            --concurrency=20
+            --timeout=120
+            --max-instances=3
+
+      - run: 'echo "Deployed to ${{ steps.deploy.outputs.url }}"'

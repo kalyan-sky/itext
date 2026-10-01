@@ -77,7 +77,8 @@ public class PdfGenerator {
         // immediateFlush=false keeps pages in memory so page numbers can be stamped at the end
         try (Document document = new Document(pdf, pageSize, false)) {
             // Fonts belong to one PdfDocument, so a fresh one is created per PDF
-            PdfFont bold = createBoldFont();
+            PdfFont bold = createFont(StandardFonts.HELVETICA_BOLD);
+            PdfFont mono = createFont(StandardFonts.COURIER);
             document.setMargins(MARGIN, MARGIN, MARGIN + 12, MARGIN);
             if (content.titleOnPage()) {
                 document.add(new Paragraph(content.title())
@@ -86,7 +87,7 @@ public class PdfGenerator {
                         .setMarginBottom(12));
             }
             for (Block block : content.blocks()) {
-                render(document, block, bold);
+                render(document, block, bold, mono);
             }
             if (content.pageNumbers()) {
                 addPageNumbers(document, pdf);
@@ -94,9 +95,9 @@ public class PdfGenerator {
         }
     }
 
-    private static PdfFont createBoldFont() {
+    private static PdfFont createFont(String name) {
         try {
-            return PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
+            return PdfFontFactory.createFont(name);
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }
@@ -116,7 +117,7 @@ public class PdfGenerator {
         info.setCreator("itext-pdf-generator");
     }
 
-    private void render(Document document, Block block, PdfFont bold) {
+    private void render(Document document, Block block, PdfFont bold, PdfFont mono) {
         switch (block) {
             case Block.Heading heading -> document.add(new Paragraph(heading.text())
                     .setFont(bold)
@@ -126,6 +127,10 @@ public class PdfGenerator {
             case Block.Paragraph paragraph -> document.add(new Paragraph(paragraph.text())
                     .setFontSize(11)
                     .setMultipliedLeading(1.3f));
+            case Block.Preformatted preformatted -> document.add(new Paragraph(keepWhitespace(preformatted.text()))
+                    .setFont(mono)
+                    .setFontSize(9.5f)
+                    .setFixedLeading(12f));
             case Block.BulletList bulletList -> {
                 List list = new List().setListSymbol("\u2022").setSymbolIndent(10).setFontSize(11);
                 bulletList.items().forEach(item -> list.add(new ListItem(item)));
@@ -177,6 +182,40 @@ public class PdfGenerator {
                     pageSize.getWidth() / 2, MARGIN / 2,
                     page, TextAlignment.CENTER, VerticalAlignment.BOTTOM, 0);
         }
+    }
+
+    /**
+     * Layout trims spaces at the start of lines and lets wrapping eat them, so indentation and
+     * runs of spaces become no-break spaces. A single space between words stays a normal space,
+     * so copied text and line wrapping behave as usual. Tabs expand to 8-column tab stops, as in a terminal or plain-text editor.
+     */
+    private static String keepWhitespace(String text) {
+        StringBuilder result = new StringBuilder(text.length());
+        int column = 0;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            if (c == '\n') {
+                result.append('\n');
+                column = 0;
+            } else if (c == '\t') {
+                int spaces = 8 - column % 8;
+                result.append("\u00A0".repeat(spaces));
+                column += spaces;
+            } else if (c == ' ' && !isWordSeparator(text, i)) {
+                result.append('\u00A0');
+                column++;
+            } else {
+                result.append(c);
+                column++;
+            }
+        }
+        return result.toString();
+    }
+
+    private static boolean isWordSeparator(String text, int index) {
+        return index > 0 && index + 1 < text.length()
+                && !Character.isWhitespace(text.charAt(index - 1))
+                && !Character.isWhitespace(text.charAt(index + 1));
     }
 
     private static float[] toArray(java.util.List<Float> values) {

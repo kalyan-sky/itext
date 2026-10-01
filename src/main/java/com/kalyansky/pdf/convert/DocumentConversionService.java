@@ -29,7 +29,7 @@ public class DocumentConversionService {
     public static DocumentConversionService withDefaults() {
         PdfGenerator generator = new PdfGenerator();
         return new DocumentConversionService(List.of(
-                new DocxConverter(generator),
+                new OfficeConverter(),
                 new HtmlConverter(),
                 new TextConverter(generator),
                 new CsvConverter(generator),
